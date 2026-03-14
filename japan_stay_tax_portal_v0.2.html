@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宿泊税かんたん申告ツール | Japan Stay Tax Helper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500;700&family=Noto+Sans+KR:wght@300;400;700&family=Noto+Sans+SC:wght@300;400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --ink:#0d1b2a;--slate:#2d3a4a;--blue:#1565c0;--blue-d:#0d47a1;--blue-l:#e8edf8;
+  --gold:#c8960c;--gold-l:#fef3cd;--cream:#f7f5f1;--paper:#fff;
+  --border:#e0dbd0;--muted:#6b7280;--red:#b71c1c;--green:#1b5e20;
+  --orange:#e65100;--radius:10px;
+  --font:'Noto Sans JP',sans-serif;--serif:'Noto Serif JP',serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--cream);color:var(--ink);line-height:1.7;font-size:15px}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--blue);border-radius:3px}
+
+/* ── Disclaimer banner ── */
+.disclaimer-bar{background:#fff3cd;border-bottom:2px solid #f0ad00;padding:9px 5vw;display:flex;gap:10px;align-items:flex-start;font-size:12px;color:#7d4a00}
+.disclaimer-bar strong{white-space:nowrap}
+
+/* ── Header ── */
+.site-header{background:var(--slate);color:#fff;padding:0 5vw;display:flex;align-items:center;justify-content:space-between;min-height:58px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.25)}
+.logo{display:flex;align-items:center;gap:11px}
+.logo-icon{width:36px;height:36px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.logo-text strong{font-size:15px;display:block;letter-spacing:.02em}
+.logo-text span{font-size:11px;color:rgba(255,255,255,.6)}
+.lang-row{display:flex;gap:4px}
+.lb{padding:4px 11px;border:1.5px solid rgba(255,255,255,.25);border-radius:16px;background:transparent;color:rgba(255,255,255,.7);font-size:11.5px;cursor:pointer;transition:.2s;font-family:var(--font)}
+.lb:hover,.lb.on{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.55)}
+
+/* ── Hero ── */
+.hero{background:linear-gradient(135deg,#1c2e5c 0%,#1a3a7c 60%,#0d2455 100%);color:#fff;padding:56px 5vw 64px;overflow:hidden;position:relative}
+.hero::after{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='52' height='52' viewBox='0 0 52 52' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23fff' fill-opacity='0.03'%3E%3Cpath d='M26 0L52 26L26 52L0 26z'/%3E%3C/g%3E%3C/svg%3E") repeat;pointer-events:none}
+.hero-inner{max-width:820px;margin:0 auto;position:relative;z-index:1}
+.hero-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:4px 14px;font-size:11.5px;margin-bottom:20px;color:rgba(255,255,255,.8)}
+.hero h1{font-family:var(--serif);font-size:clamp(24px,3.8vw,38px);font-weight:700;line-height:1.25;margin-bottom:14px}
+.hero h1 em{font-style:normal;color:#ffd54f}
+.hero p{font-size:15px;color:rgba(255,255,255,.78);max-width:600px;margin-bottom:28px}
+.flow{display:flex;gap:10px;flex-wrap:wrap}
+.flow-step{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13);border-radius:9px;padding:10px 16px;display:flex;align-items:center;gap:9px;font-size:13px}
+.fn{width:24px;height:24px;background:#ffd54f;color:#1c2e5c;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+
+/* ── Main ── */
+.main{max-width:880px;margin:0 auto;padding:40px 5vw 80px;display:flex;flex-direction:column;gap:28px}
+
+/* ── Card ── */
+.card{background:var(--paper);border-radius:var(--radius);box-shadow:0 3px 20px rgba(0,0,0,.08);border:1px solid var(--border);overflow:hidden;animation:fu .4s ease both}
+.card:nth-child(1){animation-delay:.04s}.card:nth-child(2){animation-delay:.09s}
+.card:nth-child(3){animation-delay:.14s}.card:nth-child(4){animation-delay:.19s}
+.card:nth-child(5){animation-delay:.24s}
+@keyframes fu{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.card-head{padding:16px 26px;display:flex;align-items:center;gap:11px;color:#fff}
+.ch-blue{background:linear-gradient(90deg,var(--blue-d),var(--blue))}
+.ch-green{background:linear-gradient(90deg,#1b5e20,#2e7d32)}
+.ch-gold{background:linear-gradient(90deg,#7d5a00,#b8860b)}
+.sb{width:30px;height:30px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0}
+.card-head h2{font-size:15px;font-weight:700;letter-spacing:.03em}
+.card-head p{font-size:11.5px;color:rgba(255,255,255,.7);margin-top:1px}
+.card-body{padding:24px 26px}
+
+/* ── Region selector ── */
+.region-select-wrap{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px}
+.region-select-wrap label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;display:flex;flex-direction:column;gap:5px;flex:1;min-width:160px}
+select,input{padding:9px 12px;border:1.5px solid var(--border);border-radius:7px;font-size:14px;font-family:var(--font);color:var(--ink);background:var(--paper);outline:none;transition:.2s;width:100%}
+select:focus,input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(21,101,192,.1)}
+
+/* ── Region info box ── */
+.region-info{background:var(--blue-l);border-left:4px solid var(--blue);border-radius:0 8px 8px 0;padding:14px 18px;font-size:13px;display:none}
+.region-info.show{display:block}
+.ri-name{font-weight:700;font-size:15px;color:var(--blue-d);margin-bottom:6px}
+.ri-rates{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.ri-rate{padding:4px 10px;border-radius:6px;font-size:12px;font-weight:700}
+.ri-office{font-size:12px;color:var(--slate);margin-top:8px;line-height:1.8}
+
+/* ── Form grid ── */
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:14px 22px}
+.fg .full{grid-column:1/-1}
+.fg label{font-size:11.5px;font-weight:700;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;display:flex;flex-direction:column;gap:5px}
+.hint{font-size:11px;color:var(--muted);margin-top:3px;font-weight:400;text-transform:none;letter-spacing:0}
+
+/* ── Month grid ── */
+.month-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px}
+.mc{display:flex;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:400;color:var(--ink);cursor:pointer;letter-spacing:0;text-transform:none;padding:7px 4px;border-radius:7px;border:1.5px solid var(--border);background:var(--paper);transition:.2s;user-select:none}
+.mc input{width:auto;padding:0;border:none;background:transparent;cursor:pointer;width:14px;height:14px;min-width:0;box-shadow:none}
+.mc:has(input:checked){background:var(--blue-l);border-color:var(--blue);color:var(--blue-d);font-weight:700}
+
+/* ── Buttons ── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:11px 22px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;border:none;font-family:var(--font);text-decoration:none;white-space:nowrap}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{background:var(--blue-d);transform:translateY(-1px);box-shadow:0 5px 18px rgba(13,71,161,.3)}
+.btn-gold{background:#b8860b;color:#fff}.btn-gold:hover{background:#8a6200;transform:translateY(-1px)}
+.btn-outline{background:transparent;border:2px solid var(--blue);color:var(--blue)}.btn-outline:hover{background:var(--blue-l)}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{background:#2e7d32;transform:translateY(-1px)}
+.btn-red{background:var(--red);color:#fff}.btn-red:hover{background:#c62828}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn-lg{padding:13px 28px;font-size:15px}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+
+/* ── Info boxes ── */
+.info-box{padding:13px 17px;border-radius:8px;font-size:13px;display:flex;gap:9px;align-items:flex-start}
+.ib-warn{background:#fff8e1;color:#7d4a00;border-left:4px solid #ffa000}
+.ib-tip{background:var(--blue-l);color:var(--blue-d);border-left:4px solid var(--blue)}
+.ib-ok{background:#e8f5e9;color:#1b5e20;border-left:4px solid #43a047}
+
+/* ── Template info ── */
+.tpl-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin:14px 0}
+.tpl-col{background:var(--blue-l);border-radius:8px;padding:11px 14px;font-size:12px}
+.tpl-col strong{display:block;font-size:13px;color:var(--blue-d);margin-bottom:2px}
+
+/* ── Upload zone ── */
+.upload-zone{border:2.5px dashed var(--border);border-radius:var(--radius);padding:36px;text-align:center;cursor:pointer;transition:.25s;background:var(--cream)}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--blue);background:var(--blue-l)}
+.upload-zone input[type=file]{display:none}
+.upload-icon{font-size:38px;margin-bottom:10px}
+.upload-zone h3{font-size:15px;margin-bottom:5px;color:var(--blue-d)}
+.upload-zone p{font-size:12px;color:var(--muted)}
+.upload-status{display:none;margin-top:14px;padding:11px 15px;border-radius:7px;font-size:13px;align-items:center;gap:8px}
+.upload-status.show{display:flex}.upload-status.ok{background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7}
+.upload-status.err{background:#ffebee;color:var(--red);border:1px solid #ef9a9a}
+
+/* ── Table ── */
+.tbl-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{background:var(--blue-d);color:#fff;padding:9px 11px;text-align:center;font-weight:600;font-size:11px;letter-spacing:.05em;white-space:nowrap}
+td{padding:8px 11px;border-bottom:1px solid #f0eee8;text-align:center;vertical-align:middle}
+tr:nth-child(even) td{background:#f8f9ff}
+tr:hover td{background:var(--blue-l)}
+.tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700}
+.t1{background:#e8f5e9;color:#1b5e20}.t2{background:#e3f2fd;color:#0d47a1}
+.t3{background:#fce4ec;color:#880e4f}.tx{background:#fff8e1;color:#e65100}
+
+/* ── Summary ── */
+.sum-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:20px 0}
+.sc{border-radius:9px;padding:14px;text-align:center}
+.sc .lbl{font-size:10.5px;color:var(--muted);margin-bottom:3px;font-weight:600}
+.sc .val{font-size:20px;font-weight:700;font-family:var(--serif)}
+.sc1{background:#e8f5e9}.sc2{background:#e3f2fd}.sc3{background:#fce4ec}
+.scx{background:#fff8e1}.sct{background:var(--blue-d);color:#fff}
+.sct .lbl{color:rgba(255,255,255,.7)}
+
+/* ── Doc tabs ── */
+.doc-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:22px}
+.dt{padding:11px 22px;border:none;background:transparent;font-family:var(--font);font-size:13.5px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:.2s}
+.dt.on{color:var(--blue-d);border-bottom-color:var(--blue-d)}
+.dp{display:none}.dp.on{display:block}
+
+/* ── Monthly tabs ── */
+.mo-tabs{display:flex;gap:6px;margin-bottom:18px;flex-wrap:wrap}
+.mt-btn{padding:6px 16px;border-radius:16px;border:1.5px solid var(--blue);background:transparent;color:var(--blue);font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--font);transition:.2s}
+.mt-btn.on{background:var(--blue-d);color:#fff;border-color:var(--blue-d)}
+.mo-panel{display:none}.mo-panel.on{display:block}
+
+/* ── 月計表 ── */
+.monthly-wrap{font-family:var(--serif);font-size:12px}
+.m-title{text-align:center;font-size:17px;font-weight:700;padding:10px 0 4px;letter-spacing:.08em}
+.m-sub{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:10px}
+.mt{width:100%;border-collapse:collapse}
+.mt th,.mt td{border:1px solid #bbb;padding:5px 7px;text-align:center;font-size:11.5px}
+.mt th{background:#e8eaf6;font-size:11px}
+.mt .dc{font-weight:700;width:34px}.mt .c1{color:#1b5e20}.mt .c2{color:#0d47a1}.mt .c3{color:#880e4f}
+.mt .tot-row td{background:#e8eaf6;font-weight:700}.mt .tax-row td{background:#fff9c4}
+
+/* ── 申告書 ── */
+.sh{font-family:var(--serif);font-size:10px;border:2px solid #111;padding:16px;max-width:710px;margin:0 auto}
+.sh-title{text-align:center;font-size:15px;font-weight:700;padding:9px 0;border-bottom:2px solid #111;margin-bottom:11px;letter-spacing:.15em}
+.sh-info{display:grid;grid-template-columns:110px 1fr;border:1px solid #111;margin-bottom:11px}
+.sh-info-row{display:contents}
+.sh-info-row > div{border:0.5px solid #aaa;padding:5px 9px;font-size:9.5px}
+.sh-info-row > div:first-child{background:#f4f4f4;font-weight:700}
+.sh-mb{border:1px solid #111;margin-bottom:9px}
+.sh-mh{background:#e8eaf6;padding:5px 11px;font-weight:700;font-size:11px;border-bottom:1px solid #aaa;display:flex;justify-content:space-between}
+.sh-tbl{width:100%;border-collapse:collapse}
+.sh-tbl th,.sh-tbl td{border:0.5px solid #aaa;padding:5px 8px;font-size:9.5px}
+.sh-tbl th{background:#f0f0f0}
+.sh-tot td{background:#fff9c4;font-weight:700;font-size:10.5px}
+.sh-grand{text-align:right;margin-top:12px;padding:10px;background:#fff3cd;border-radius:6px;border:1px solid #f0c040}
+.sh-note{font-size:8.5px;color:#555;margin-top:10px;border-top:1px solid #ddd;padding-top:8px}
+
+/* ── Profile box ── */
+.profile-bar{background:var(--gold-l);border:1.5px solid #e6b800;border-radius:8px;padding:11px 16px;display:flex;align-items:center;gap:12px;font-size:13px;margin-bottom:16px}
+.profile-bar span{flex:1}
+.profile-select{flex:1;max-width:220px}
+
+/* ── Footer ── */
+footer{background:#1a2233;color:rgba(255,255,255,.55);padding:28px 5vw;font-size:11.5px;line-height:1.9;text-align:center}
+footer a{color:rgba(255,255,255,.75)}
+footer strong{color:rgba(255,255,255,.85)}
+.footer-disclaimer{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:12px 16px;margin:12px auto;max-width:720px;text-align:left}
+
+/* ── Misc ── */
+.hidden{display:none!important}
+.print-bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+@media(max-width:580px){.fg{grid-template-columns:1fr}.month-grid{grid-template-columns:repeat(4,1fr)}.flow{flex-direction:column}.lb span{display:none}}
+
+/* ── Print ── */
+@media print{
+  .site-header,.disclaimer-bar,.hero,.main>.card:not(.pt),.print-bar,.doc-tabs,.mo-tabs,footer,.no-print{display:none!important}
+  body{background:#fff}
+  .pt{display:block!important;box-shadow:none;border:none}
+  .dp,.mo-panel{display:block!important}
+  @page{margin:12mm;size:A4}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Disclaimer banner ── -->
+<div class="disclaimer-bar">
+  <strong>⚠️ <span data-t="disc_label">免責</span>：</strong>
+  <span data-t="disc_text">本ツールは民間有志が作成した申告補助ツールです。公式ではありません。最終確認は必ず税務署等の公式情報でお願いします。</span>
+</div>
+
+<!-- ── Header ── -->
+<header class="site-header">
+  <div class="logo">
+    <div class="logo-icon">🏡</div>
+    <div class="logo-text">
+      <strong data-t="site_name">宿泊税かんたん申告ツール</strong>
+      <span data-t="site_sub">Japan Accommodation Tax Helper — 民間有志ツール</span>
+    </div>
+  </div>
+  <div class="lang-row">
+    <button class="lb on" data-lang="ja" onclick="setLang('ja')">🇯🇵 <span>日本語</span></button>
+    <button class="lb" data-lang="zh" onclick="setLang('zh')">🇨🇳 <span>中文</span></button>
+    <button class="lb" data-lang="en" onclick="setLang('en')">🇬🇧 <span>English</span></button>
+    <button class="lb" data-lang="ko" onclick="setLang('ko')">🇰🇷 <span>한국어</span></button>
+  </div>
+</header>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">🏡 <span data-t="hero_tag">全国の宿泊事業者向け 無料・非公式ツール</span></div>
+    <h1 data-t="hero_h1">宿泊税、<em>かんたんに。</em></h1>
+    <p data-t="hero_desc">民泊・ホテル経営者のための宿泊税申告補助ツールです。お住まいの地域を選んでExcelをアップロードするだけで、月計表と申告書が自動生成されます。</p>
+    <div class="flow">
+      <div class="flow-step"><div class="fn">1</div><span data-t="f1">地域・施設情報を設定</span></div>
+      <div class="flow-step"><div class="fn">2</div><span data-t="f2">テンプレートをダウンロード</span></div>
+      <div class="flow-step"><div class="fn">3</div><span data-t="f3">データを入力してアップロード</span></div>
+      <div class="flow-step"><div class="fn">4</div><span data-t="f4">書類を生成・印刷</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Main ── -->
+<div class="main">
+
+<!-- STEP 1 -->
+<div class="card">
+  <div class="card-head ch-blue">
+    <div class="sb">1</div>
+    <div><h2 data-t="s1h">地域・施設情報を設定</h2><p data-t="s1p">課税機関・税率が自動で決まります</p></div>
+  </div>
+  <div class="card-body">
+
+    <!-- Profile load bar -->
+    <div class="profile-bar hidden" id="profileBar">
+      <span>💾 <span data-t="profile_found">保存済みプロフィールを読み込めます：</span></span>
+      <select class="profile-select" id="profileSelect" onchange="loadProfile(this.value)"></select>
+      <button class="btn btn-sm btn-outline" onclick="deleteProfile()">🗑️</button>
+    </div>
+
+    <!-- Region selector -->
+    <div class="region-select-wrap">
+      <label data-t="lbl_region">
+        <span class="tl">都道府県／課税地域 *</span>
+        <select id="sel_region" onchange="onRegionChange()">
+          <option value="">— 選択してください —</option>
+        </select>
+      </label>
+    </div>
+
+    <!-- Region info box -->
+    <div class="region-info" id="regionInfo"></div>
+
+    <div style="height:16px"></div>
+    <div class="fg">
+      <label class="full" data-t="lbl_company"><span class="tl">法人名 / 氏名 *</span><input id="f_company" data-t-ph="ph_company" placeholder="例：〇〇株式会社"></label>
+      <label class="full" data-t="lbl_hotel"><span class="tl">施設名 / 届出番号 *</span><input id="f_hotel" data-t-ph="ph_hotel" placeholder="例：〇〇ホテル"></label>
+      <label class="full" data-t="lbl_addr"><span class="tl">義務者住所（法人所在地）</span><input id="f_addr" data-t-ph="ph_addr" placeholder="例：大阪市中央区〇〇1-1"></label>
+      <label class="full" data-t="lbl_faddr"><span class="tl">施設所在地</span><input id="f_faddr" data-t-ph="ph_faddr" placeholder="例：大阪市浪速区〇〇1-2"></label>
+      <label data-t="lbl_tel"><span class="tl">電話番号</span><input id="f_tel" placeholder="例：06-XXXX-XXXX"></label>
+      <label data-t="lbl_shihyo"><span class="tl">証票番号</span><input id="f_shihyo" placeholder="例：240199122"></label>
+      <label data-t="lbl_chotei"><span class="tl">徴収番号</span><input id="f_chotei" placeholder="例：240199122"></label>
+      <label data-t="lbl_hojin"><span class="tl">法人番号</span><input id="f_hojin" placeholder="13桁"></label>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-blue" onclick="saveProfile()">💾 <span data-t="btn_save_profile">プロフィールを保存</span></button>
+      <button class="btn btn-outline btn-sm" onclick="exportProfile()">📥 <span data-t="btn_export_profile">設定をExcelで保存</span></button>
+      <label class="btn btn-outline btn-sm" style="cursor:pointer" data-t="btn_import_profile">
+        <span class="tl">📤 設定Excelを読み込む</span>
+        <input type="file" accept=".xlsx" style="display:none" onchange="importProfile(event)">
+      </label>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2 -->
+<div class="card">
+  <div class="card-head ch-gold">
+    <div class="sb">2</div>
+    <div><h2 data-t="s2h">Excelテンプレートをダウンロード</h2><p data-t="s2p">PMSデータを貼り付けるだけ。公式は不要です。</p></div>
+  </div>
+  <div class="card-body">
+    <div class="info-box ib-tip" style="margin-bottom:14px">
+      <span>ℹ️</span>
+      <span data-t="tpl_note">A〜E列の5項目を入力するだけ。税区分・税額の計算はすべてウェブサイトが自動で行います。計算列の入力は不要です。</span>
+    </div>
+    <div class="tpl-cols">
+      <div class="tpl-col"><strong data-t="tc1h">A列：チェックイン日</strong><span data-t="tc1b">YYYY/MM/DD形式で入力</span></div>
+      <div class="tpl-col"><strong data-t="tc2h">B列：泊数</strong><span data-t="tc2b">整数で入力（例：2）</span></div>
+      <div class="tpl-col"><strong data-t="tc3h">C列：人数</strong><span data-t="tc3b">整数で入力（例：3）</span></div>
+      <div class="tpl-col"><strong data-t="tc4h">D列：宿泊料金合計</strong><span data-t="tc4b">税抜き・合計金額（朝食等除く）</span></div>
+      <div class="tpl-col"><strong data-t="tc5h">E列：予約ID</strong><span data-t="tc5b">任意。管理用。</span></div>
+    </div>
+    <div class="info-box ib-warn" style="margin-bottom:16px">
+      <span>⚠️</span>
+      <span data-t="tpl_warn">宿泊料金は「1泊あたり」ではなく「滞在合計（泊数×室料）」を入力してください。朝食・清掃料等は含めないでください。</span>
+    </div>
+    <button class="btn btn-gold btn-lg" onclick="downloadTemplate()">⬇️ <span data-t="btn_dl_tpl">Excelテンプレートをダウンロード (.xlsx)</span></button>
+  </div>
+</div>
+
+<!-- STEP 3 -->
+<div class="card">
+  <div class="card-head ch-blue">
+    <div class="sb">3</div>
+    <div><h2 data-t="s3h">入力済みExcelをアップロード</h2><p data-t="s3p">ドラッグ&ドロップ または クリックで選択</p></div>
+  </div>
+  <div class="card-body">
+    <div class="upload-zone" id="upZone" onclick="document.getElementById('fi').click()">
+      <input type="file" id="fi" accept=".xlsx,.xls,.csv" onchange="handleFile(event)">
+      <div class="upload-icon">📂</div>
+      <h3 data-t="up_h">ファイルをここにドロップ</h3>
+      <p data-t="up_p">.xlsx / .xls / .csv 対応</p>
+    </div>
+    <div class="upload-status" id="upStat"><span id="upIcon"></span><span id="upMsg"></span></div>
+
+    <div class="hidden" id="previewArea" style="margin-top:22px">
+      <h3 style="font-size:13.5px;font-weight:700;color:var(--blue-d);margin-bottom:11px" data-t="prev_title">📋 取込みデータ確認</h3>
+      <div class="tbl-wrap"><table><thead id="pHead"></thead><tbody id="pBody"></tbody></table></div>
+      <div class="sum-row" id="sumRow"></div>
+      <div class="btn-row">
+        <button class="btn btn-green btn-lg" onclick="generateDocs()">📄 <span data-t="btn_gen">申告書類を生成する</span></button>
+        <button class="btn btn-outline btn-sm" onclick="clearAll()">🗑️ <span data-t="btn_clr">クリア</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4 (output) -->
+<div class="card hidden pt" id="outCard">
+  <div class="card-head ch-green">
+    <div class="sb">4</div>
+    <div><h2 data-t="s4h">✅ 書類が生成されました</h2><p data-t="s4p">内容を確認してから印刷・提出してください</p></div>
+  </div>
+  <div class="card-body">
+    <div class="doc-tabs" id="docTabs"></div>
+    <div class="dp" id="dp_shinko"></div>
+    <div class="dp" id="dp_monthly">
+      <div class="mo-tabs" id="moTabs"></div>
+      <div id="moContent"></div>
+    </div>
+    <div class="print-bar no-print">
+      <button class="btn btn-red btn-lg" onclick="doPrint('shinko')">🖨️ <span data-t="btn_ps">申告書を印刷</span></button>
+      <button class="btn btn-blue btn-lg" onclick="doPrint('monthly')">🖨️ <span data-t="btn_pm">月計表を印刷</span></button>
+      <button class="btn btn-outline" onclick="dlResult()">📥 <span data-t="btn_dl_r">Excelで保存</span></button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ── Footer ── -->
+<footer>
+  <div class="footer-disclaimer">
+    <strong data-t="foot_disc_h">【免責事項 / Disclaimer】</strong><br>
+    <span data-t="foot_disc">本ツールは宿泊事業者の申告作業を補助することを目的とした、民間有志による非公式ツールです。税務当局・地方自治体とは一切関係ありません。本ツールの利用により生じた損害・申告誤り等について、作成者はいかなる責任も負いません。申告内容の最終確認・判断は、必ず各都道府県の公式窓口または税理士等の専門家にご相談ください。</span>
+  </div>
+  <p data-t="foot_contact">各地域の担当窓口は「施設情報」欄で地域を選択すると表示されます</p>
+  <p style="margin-top:6px;font-size:10.5px">© 2025 民間有志ツール — このツールはオープンソースで配布されています。改変・再配布は自由ですが、公式機関を名乗ることはご遠慮ください。</p>
+</footer>
+
+<script>
+/* ════════════════════════════════════════════
+   JAPAN-WIDE TAX REGION DATABASE
+════════════════════════════════════════════ */
+const REGIONS = {
+  tokyo: {
+    name_ja:'東京都', name_zh:'东京都', name_en:'Tokyo', name_ko:'도쿄도',
+    tax_name:'東京都宿泊税',
+    rates:[
+      {label:'①',min:0,max:10000,rate:100,color:'#e8f5e9',tc:'#1b5e20'},
+      {label:'②',min:10000,max:15000,rate:200,color:'#e3f2fd',tc:'#0d47a1'},
+      {label:'③',min:15000,max:null,rate:300,color:'#fce4ec',tc:'#880e4f'},
+    ],
+    exempt_below:null,
+    office:{
+      ja:'各都税事務所（施設所在地の都税事務所）',
+      zh:'各都税事务所（施设所在地）',en:'Local Tokyo Metropolitan Tax Office',ko:'해당 도세사무소',
+    },
+    address:'〒163-8001 東京都新宿区西新宿2-8-1',
+    tel:'03-5321-1111（代表）',
+    url:'https://www.tax.metro.tokyo.lg.jp/',
+    since:'2002年10月',note_ja:'1泊10,000円未満でも100円課税。免税なし。',
+  },
+  osaka: {
+    name_ja:'大阪府', name_zh:'大阪府', name_en:'Osaka Pref.', name_ko:'오사카부',
+    tax_name:'大阪府宿泊税',
+    rates:[
+      {label:'①',min:5000,max:15000,rate:200,color:'#e8f5e9',tc:'#1b5e20'},
+      {label:'②',min:15000,max:20000,rate:400,color:'#e3f2fd',tc:'#0d47a1'},
+      {label:'③',min:20000,max:null,rate:500,color:'#fce4ec',tc:'#880e4f'},
+    ],
+    exempt_below:5000,
+    office:{
+      ja:'なにわ北府税事務所 宿泊諸税課',
+      zh:'浪速北府税务所 住宿诸税课',en:'Naniwakita Prefectural Tax Office (Accommodation Tax Div.)',ko:'나니와키타 부세사무소 숙박제세과',
+    },
+    address:'〒530-8501 大阪市北区大淀南1丁目2番70号',
+    tel:'06-6362-8611',
+    url:'https://www.pref.osaka.lg.jp/',
+    since:'2017年1月（令和7年9月改定）',note_ja:'1人1泊5,000円未満は免税。9月以降新税率。',
+  },
+  kyoto: {
+    name_ja:'京都市', name_zh:'京都市', name_en:'Kyoto City', name_ko:'교토시',
+    tax_name:'京都市宿泊税',
+    rates:[
+      {label:'①',min:0,max:20000,rate:200,color:'#e8f5e9',tc:'#1b5e20'},
+      {label:'②',min:20000,max:50000,rate:500,color:'#e3f2fd',tc:'#0d47a1'},
+      {label:'③',min:50000,max:null,rate:1000,color:'#fce4ec',tc:'#880e4f'},
+    ],
+    exempt_below:null,
+    office:{ja:'京都市 市税事務所 本庁支所 宿泊税担当',zh:'京都市税务所 住宿税担当',en:'Kyoto City Tax Office (Accommodation Tax)',ko:'교토시세무소 숙박세 담당'},
+    address:'〒604-8091 京都市中京区寺町通御池上る上本能寺前町488',
+    tel:'075-213-5247',
+    url:'https://www.city.kyoto.lg.jp/',
+    since:'2018年10月',note_ja:'1泊20,000円未満でも200円課税。免税なし。',
+  },
+  fukuoka: {
+    name_ja:'福岡県', name_zh:'福冈县', name_en:'Fukuoka Pref.', name_ko:'후쿠오카현',
+    tax_name:'福岡県宿泊税',
+    rates:[
+      {label:'①',min:0,max:20000,rate:200,color:'#e8f5e9',tc:'#1b5e20'},
+      {label:'②',min:20000,max:null,rate:500,color:'#fce4ec',tc:'#880e4f'},
+    ],
+    exempt_below:null,
+    office:{ja:'福岡県 宿泊税事務センター',zh:'福冈县 住宿税事务中心',en:'Fukuoka Pref. Accommodation Tax Center',ko:'후쿠오카현 숙박세사무센터'},
+    address:'〒812-8577 福岡市博多区東公園7-7',
+    tel:'092-643-3101',
+    url:'https://www.pref.fukuoka.lg.jp/',
+    since:'2020年4月',note_ja:'1泊20,000円未満200円。以上500円。',
+  },
+  hokkaido_kutchan: {
+    name_ja:'北海道 倶知安町', name_zh:'北海道 俱知安町', name_en:'Kutchan, Hokkaido', name_ko:'홋카이도 구챤초',
+    tax_name:'倶知安町宿泊税',
+    rates:[
+      {label:'2%',min:0,max:null,rate:0,is_pct:true,pct:0.02,color:'#e8f5e9',tc:'#1b5e20'},
+    ],
+    exempt_below:null,
+    is_pct_tax:true,
+    office:{ja:'倶知安町 税務課',zh:'俱知安町 税务课',en:'Kutchan Town Tax Division',ko:'구챤초 세무과'},
+    address:'〒044-0001 北海道虻田郡倶知安町北1条東3丁目5番地',
+    tel:'0136-56-8001',
+    url:'https://www.town.kutchan.hokkaido.jp/',
+    since:'2019年1月',note_ja:'宿泊料金の2%（別途計算）。',
+  },
+  kanazawa: {
+    name_ja:'石川県 金沢市', name_zh:'石川县 金泽市', name_en:'Kanazawa City', name_ko:'이시카와현 가나자와시',
+    tax_name:'金沢市宿泊税',
+    rates:[
+      {label:'①',min:0,max:20000,rate:200,color:'#e8f5e9',tc:'#1b5e20'},
+      {label:'②',min:20000,max:null,rate:500,color:'#fce4ec',tc:'#880e4f'},
+    ],
+    exempt_below:null,
+    office:{ja:'金沢市 市民税課',zh:'金泽市 市民税课',en:'Kanazawa City Resident Tax Division',ko:'가나자와시 시민세과'},
+    address:'〒920-8577 金沢市広坂1-1-1',
+    tel:'076-220-2191',
+    url:'https://www.city.kanazawa.lg.jp/',
+    since:'2019年4月',note_ja:'',
+  },
+  nagano: {
+    name_ja:'長野県 白馬村・小谷村', name_zh:'长野县 白马村・小谷村', name_en:'Hakuba/Otari, Nagano', name_ko:'나가노현 하쿠바무라',
+    tax_name:'長野県 宿泊税',
+    rates:[
+      {label:'①',min:0,max:15000,rate:150,color:'#e8f5e9',tc:'#1b5e20'},
+      {label:'②',min:15000,max:null,rate:300,color:'#fce4ec',tc:'#880e4f'},
+    ],
+    exempt_below:null,
+    office:{ja:'長野県 白馬村・小谷村 課税担当',zh:'长野县 各町村税务担当',en:'Hakuba/Otari Village Tax Office',ko:'하쿠바무라·오타리무라 세무 담당'},
+    address:'〒399-9301 長野県北安曇郡白馬村大字北城7025',
+    tel:'0261-72-5000',
+    url:'https://www.vill.hakuba.lg.jp/',
+    since:'2021年4月',note_ja:'※対象地域は一部山岳リゾートエリアのみ',
+  },
+  nara: {
+    name_ja:'奈良県', name_zh:'奈良县', name_en:'Nara Pref.', name_ko:'나라현',
+    tax_name:'奈良県宿泊税',
+    rates:[
+      {label:'①',min:0,max:20000,rate:200,color:'#e8f5e9',tc:'#1b5e20'},
+      {label:'②',min:20000,max:null,rate:500,color:'#fce4ec',tc:'#880e4f'},
+    ],
+    exempt_below:null,
+    office:{ja:'奈良県 税務課',zh:'奈良县 税务课',en:'Nara Prefecture Tax Division',ko:'나라현 세무과'},
+    address:'〒630-8501 奈良市登大路町30番地',
+    tel:'0742-27-8803',
+    url:'https://www.pref.nara.jp/',
+    since:'2025年4月（予定）',note_ja:'※導入予定。最新情報は公式にご確認ください。',
+  },
+};
+
+/* ════════════════════════════════════════════
+   i18n
+════════════════════════════════════════════ */
+const T = {
+  ja:{
+    disc_label:'免責', disc_text:'本ツールは民間有志が作成した申告補助ツールです。公式ではありません。最終確認は必ず税務署等の公式情報でお願いします。',
+    site_name:'宿泊税かんたん申告ツール', site_sub:'Japan Accommodation Tax Helper — 民間有志ツール',
+    hero_tag:'全国の宿泊事業者向け 無料・非公式ツール',
+    hero_h1:'宿泊税、<em>かんたんに。</em>',
+    hero_desc:'民泊・ホテル経営者のための宿泊税申告補助ツールです。地域を選んでExcelをアップロードするだけで、月計表と申告書が自動生成されます。',
+    f1:'地域・施設情報を設定',f2:'テンプレートをダウンロード',f3:'データを入力してアップロード',f4:'書類を生成・印刷',
+    s1h:'地域・施設情報を設定',s1p:'課税機関・税率が自動で決まります',
+    s2h:'Excelテンプレートをダウンロード',s2p:'PMSデータを貼り付けるだけ',
+    s3h:'入力済みExcelをアップロード',s3p:'ドラッグ&ドロップ または クリックで選択',
+    s4h:'✅ 書類が生成されました',s4p:'内容を確認してから印刷・提出してください',
+    profile_found:'保存済みプロフィールを読み込めます：',
+    lbl_region:'都道府県／課税地域 *',lbl_company:'法人名 / 氏名 *',lbl_hotel:'施設名 / 届出番号 *',
+    lbl_addr:'義務者住所',lbl_faddr:'施設所在地',lbl_tel:'電話番号',
+    lbl_shihyo:'証票番号',lbl_chotei:'徴収番号',lbl_hojin:'法人番号',
+    ph_company:'例：〇〇株式会社',ph_hotel:'例：〇〇ホテル',
+    ph_addr:'例：大阪市中央区〇〇1-1',ph_faddr:'例：大阪市浪速区〇〇1-2',
+    btn_save_profile:'プロフィールを保存',btn_export_profile:'設定をExcelで保存',btn_import_profile:'設定Excelを読み込む',
+    tpl_note:'A〜E列の5項目を入力するだけ。税区分・税額の計算はすべてウェブサイトが自動で行います。',
+    tc1h:'A列：チェックイン日',tc1b:'YYYY/MM/DD形式で入力',tc2h:'B列：泊数',tc2b:'整数で入力（例：2）',
+    tc3h:'C列：人数',tc3b:'整数で入力（例：3）',tc4h:'D列：宿泊料金合計',tc4b:'税抜き・合計金額',tc5h:'E列：予約ID',tc5b:'任意。管理用。',
+    tpl_warn:'宿泊料金は「1泊あたり」ではなく「滞在合計（泊数×室料）」を入力してください。朝食・清掃料等は含めないでください。',
+    btn_dl_tpl:'Excelテンプレートをダウンロード (.xlsx)',
+    up_h:'ファイルをここにドロップ',up_p:'.xlsx / .xls / .csv 対応',
+    prev_title:'📋 取込みデータ確認',btn_gen:'申告書類を生成する',btn_clr:'クリア',
+    btn_ps:'申告書を印刷',btn_pm:'月計表を印刷',btn_dl_r:'Excelで保存',
+    tab_sh:'宿泊税納入申告書',tab_mo:'月計表（様式第8号）',
+    col_ci:'チェックイン日',col_ni:'泊数',col_gu:'人数',col_fa:'料金合計',col_pp:'1人1泊単価',col_ca:'税区分',col_ta:'宿泊税額',col_id:'予約ID',
+    sum1:'①区分（泊）',sum2:'②区分（泊）',sum3:'③区分（泊）',sumx:'免税（泊）',sumt:'宿泊税合計',
+    foot_disc_h:'【免責事項 / Disclaimer】',
+    foot_disc:'本ツールは宿泊事業者の申告作業を補助することを目的とした、民間有志による非公式ツールです。税務当局・地方自治体とは一切関係ありません。申告内容の最終確認は各公式窓口または税理士にご相談ください。',
+    foot_contact:'各地域の担当窓口は「施設情報」欄で地域を選択すると表示されます',
+  },
+  zh:{
+    disc_label:'免責', disc_text:'本工具由民間志願者製作，並非官方工具。請以官方稅務資訊作最終確認。',
+    site_name:'住宿稅簡易申報工具', site_sub:'Japan Accommodation Tax Helper — 民間志願工具',
+    hero_tag:'面向全日本住宿業者 — 免費非官方工具',
+    hero_h1:'住宿稅，<em>輕鬆搞定。</em>',
+    hero_desc:'面向民宿、酒店經營者的免費申報工具。選擇地區並上傳Excel，即可自動生成月計表和申告書。',
+    f1:'設定地區和設施資訊',f2:'下載Excel範本',f3:'填寫數據並上傳',f4:'生成並打印文件',
+    s1h:'設定地區・設施資訊',s1p:'課稅機構和稅率將自動確定',
+    s2h:'下載Excel範本',s2p:'貼上PMS數據即可',
+    s3h:'上傳已填寫的Excel',s3p:'拖拽或點擊選擇文件',
+    s4h:'✅ 申報文件已生成',s4p:'確認內容後打印並提交',
+    profile_found:'可讀取已保存的設施資料：',
+    lbl_region:'都道府県／課稅地區 *',lbl_company:'法人名稱 / 姓名 *',lbl_hotel:'設施名稱 / 申報編號 *',
+    lbl_addr:'義務者地址（法人所在地）',lbl_faddr:'設施所在地',lbl_tel:'電話號碼',
+    lbl_shihyo:'証票番號',lbl_chotei:'徵收番號',lbl_hojin:'法人番號',
+    ph_company:'例：〇〇株式会社',ph_hotel:'例：〇〇酒店',
+    ph_addr:'例：大阪市中央区〇〇1-1',ph_faddr:'例：大阪市浪速区〇〇1-2',
+    btn_save_profile:'保存設施資料',btn_export_profile:'匯出設定為Excel',btn_import_profile:'從Excel讀取設定',
+    tpl_note:'只需填寫A〜E列共5個欄位即可。稅率分類和稅額均由網站自動計算，無需輸入計算欄。',
+    tc1h:'A列：入住日期',tc1b:'YYYY/MM/DD格式',tc2h:'B列：住宿晚數',tc2b:'整數（例：2）',
+    tc3h:'C列：人數',tc3b:'整數（例：3）',tc4h:'D列：住宿費合計',tc4b:'不含稅，合計金額',tc5h:'E列：預約ID',tc5b:'選填，管理用',
+    tpl_warn:'住宿費請填寫整個住宿期間的合計金額，不要填單晚費用。早餐、清潔費等請勿包含。',
+    btn_dl_tpl:'下載Excel範本 (.xlsx)',
+    up_h:'將Excel文件拖拽到此處',up_p:'支持 .xlsx / .xls / .csv',
+    prev_title:'📋 數據預覽確認',btn_gen:'生成申告書類',btn_clr:'清除',
+    btn_ps:'打印申告書',btn_pm:'打印月計表',btn_dl_r:'另存為Excel',
+    tab_sh:'住宿稅納入申告書',tab_mo:'月計表（様式第8号）',
+    col_ci:'入住日期',col_ni:'晚數',col_gu:'人數',col_fa:'費用合計',col_pp:'每人每晚單價',col_ca:'稅率類別',col_ta:'住宿稅金額',col_id:'預約ID',
+    sum1:'①類別（晚）',sum2:'②類別（晚）',sum3:'③類別（晚）',sumx:'免稅（晚）',sumt:'住宿稅合計',
+    foot_disc_h:'【免責聲明 / Disclaimer】',
+    foot_disc:'本工具由民間志願者製作，旨在輔助住宿業者完成申報作業，與任何稅務機關無關。因使用本工具導致的任何錯誤或損失，製作者概不負責。請向當地官方窗口或稅務師進行最終確認。',
+    foot_contact:'選擇地區後，對應的課稅機構資訊將顯示在「設施資訊」欄',
+  },
+  en:{
+    disc_label:'Note', disc_text:'This is an unofficial community tool, not affiliated with any government authority. Always confirm your final filing with official tax office guidance.',
+    site_name:'Japan Stay Tax Helper', site_sub:'Accommodation Tax Filing Tool — Community Project',
+    hero_tag:'Free, unofficial tool for accommodation operators across Japan',
+    hero_h1:'Accommodation Tax,<br><em>made simple.</em>',
+    hero_desc:'A free helper tool for guesthouse and hotel operators. Select your region, upload your stay data, and get the monthly report and declaration form auto-generated.',
+    f1:'Set region & facility',f2:'Download template',f3:'Fill in & upload',f4:'Generate & print docs',
+    s1h:'Set Region & Facility Info',s1p:'The correct tax authority and rates will be determined automatically',
+    s2h:'Download the Excel Template',s2p:'Just paste your PMS export into the template',
+    s3h:'Upload your completed Excel',s3p:'Drag & drop or click to select',
+    s4h:'✅ Documents Generated',s4p:'Please review before printing and submitting',
+    profile_found:'Load saved facility profile:',
+    lbl_region:'Prefecture / Tax Region *',lbl_company:'Company / Individual Name *',lbl_hotel:'Facility Name / Registration No. *',
+    lbl_addr:'Taxpayer Address',lbl_faddr:'Facility Address',lbl_tel:'Phone Number',
+    lbl_shihyo:'Certificate No.',lbl_chotei:'Collection No.',lbl_hojin:'Corporate Number',
+    ph_company:'e.g. ABC Co., Ltd.',ph_hotel:'e.g. My Hotel Shinsaibashi',
+    ph_addr:'e.g. 1-1 Minami, Chuo, Osaka',ph_faddr:'e.g. 1-2 Namba, Naniwa, Osaka',
+    btn_save_profile:'Save Profile',btn_export_profile:'Export settings to Excel',btn_import_profile:'Import settings from Excel',
+    tpl_note:'Just fill in 5 columns (A–E). Tax category and amount are calculated automatically by the website.',
+    tc1h:'Col A: Check-in Date',tc1b:'YYYY/MM/DD format',tc2h:'Col B: Nights',tc2b:'Integer (e.g. 2)',
+    tc3h:'Col C: Guests',tc3b:'Integer (e.g. 3)',tc4h:'Col D: Total Accommodation Fare',tc4b:'Excl. tax, total for stay',tc5h:'Col E: Reservation ID',tc5b:'Optional, for management',
+    tpl_warn:'Enter the TOTAL stay amount (nights × rate), not per-night. Do not include breakfast or cleaning fees.',
+    btn_dl_tpl:'Download Excel Template (.xlsx)',
+    up_h:'Drop your file here',up_p:'Supports .xlsx / .xls / .csv',
+    prev_title:'📋 Data Preview',btn_gen:'Generate Tax Documents',btn_clr:'Clear',
+    btn_ps:'Print Declaration Form',btn_pm:'Print Monthly Report',btn_dl_r:'Save as Excel',
+    tab_sh:'Tax Declaration Form',tab_mo:'Monthly Report (Form 8)',
+    col_ci:'Check-in Date',col_ni:'Nights',col_gu:'Guests',col_fa:'Total Fare',col_pp:'Per Person/Night',col_ca:'Tax Category',col_ta:'Tax Amount',col_id:'Reservation ID',
+    sum1:'① Bracket (nights)',sum2:'② Bracket (nights)',sum3:'③ Bracket (nights)',sumx:'Exempt (nights)',sumt:'Total Tax',
+    foot_disc_h:'【Disclaimer】',
+    foot_disc:'This tool is an unofficial community project created to assist accommodation operators with tax filing. It is not affiliated with any government or tax authority. The creators bear no responsibility for errors in filings or any resulting damages. Always confirm the final filing with official channels or a qualified tax professional.',
+    foot_contact:'The relevant tax authority for your region will appear after selecting your region in Step 1.',
+  },
+  ko:{
+    disc_label:'면책', disc_text:'이 도구는 민간 자원봉사자가 제작한 비공식 신고 보조 도구입니다. 공식 세무서 정보로 최종 확인하시기 바랍니다.',
+    site_name:'숙박세 간편 신고 도구', site_sub:'Japan Accommodation Tax Helper — 민간 자원봉사 도구',
+    hero_tag:'전국 숙박 사업자를 위한 무료·비공식 도구',
+    hero_h1:'숙박세,<br><em>간편하게.</em>',
+    hero_desc:'민박·호텔 사업자를 위한 무료 신고 보조 도구입니다. 지역을 선택하고 Excel을 업로드하면 월계표와 신고서가 자동 생성됩니다.',
+    f1:'지역·시설 정보 설정',f2:'템플릿 다운로드',f3:'데이터 입력 후 업로드',f4:'서류 생성·인쇄',
+    s1h:'지역·시설 정보 설정',s1p:'과세 기관과 세율이 자동으로 결정됩니다',
+    s2h:'Excel 템플릿 다운로드',s2p:'PMS 데이터를 붙여넣기만 하면 됩니다',
+    s3h:'작성된 Excel 업로드',s3p:'드래그 앤 드롭 또는 클릭하여 선택',
+    s4h:'✅ 서류가 생성되었습니다',s4p:'내용을 확인 후 인쇄하여 제출하세요',
+    profile_found:'저장된 프로필을 불러올 수 있습니다：',
+    lbl_region:'도도부현 / 과세 지역 *',lbl_company:'법인명 / 성명 *',lbl_hotel:'시설명 / 신고 번호 *',
+    lbl_addr:'의무자 주소（법인 소재지）',lbl_faddr:'시설 소재지',lbl_tel:'전화번호',
+    lbl_shihyo:'증표번호',lbl_chotei:'징수번호',lbl_hojin:'법인번호',
+    ph_company:'예: 〇〇 주식회사',ph_hotel:'예: 〇〇 호텔',
+    ph_addr:'예: 오사카시 주오구 〇〇 1-1',ph_faddr:'예: 오사카시 나니와구 〇〇 1-2',
+    btn_save_profile:'프로필 저장',btn_export_profile:'설정을 Excel로 저장',btn_import_profile:'Excel에서 설정 불러오기',
+    tpl_note:'A~E열 5가지 항목만 입력하세요. 세율 구분·세액은 웹사이트가 자동으로 계산합니다.',
+    tc1h:'A열: 체크인 날짜',tc1b:'YYYY/MM/DD 형식',tc2h:'B열: 박수',tc2b:'정수（예: 2）',
+    tc3h:'C열: 인원수',tc3b:'정수（예: 3）',tc4h:'D열: 숙박 요금 합계',tc4b:'세금 제외·합계 금액',tc5h:'E열: 예약 ID',tc5b:'선택 사항，관리용',
+    tpl_warn:'숙박 요금은 「1박 금액」이 아닌 「전체 체류 합계」를 입력하세요. 조식·청소비 등은 포함하지 마세요.',
+    btn_dl_tpl:'Excel 템플릿 다운로드 (.xlsx)',
+    up_h:'파일을 여기에 드롭하세요',up_p:'.xlsx / .xls / .csv 지원',
+    prev_title:'📋 데이터 확인',btn_gen:'신고 서류 생성',btn_clr:'지우기',
+    btn_ps:'신고서 인쇄',btn_pm:'월계표 인쇄',btn_dl_r:'Excel로 저장',
+    tab_sh:'숙박세 납입 신고서',tab_mo:'월계표（様式第8号）',
+    col_ci:'체크인 날짜',col_ni:'박수',col_gu:'인원수',col_fa:'요금 합계',col_pp:'1인 1박 단가',col_ca:'세율 구분',col_ta:'숙박세 금액',col_id:'예약 ID',
+    sum1:'①구분（박）',sum2:'②구분（박）',sum3:'③구분（박）',sumx:'면세（박）',sumt:'숙박세 합계',
+    foot_disc_h:'【면책 사항 / Disclaimer】',
+    foot_disc:'이 도구는 숙박 사업자의 신고 작업을 보조하기 위해 제작된 민간 자원봉사 비공식 도구입니다. 세무 당국·지자체와는 무관합니다. 최종 신고 내용은 각 공식 창구 또는 세무사에게 문의하시기 바랍니다.',
+    foot_contact:'지역을 선택하면 해당 과세 기관 정보가 표시됩니다',
+  }
+};
+
+let lang = 'ja';
+let currentRegion = null;
+let parsedData = [];
+
+/* ════════════════════════════════════════════
+   INIT
+════════════════════════════════════════════ */
+function init() {
+  // Build region selector
+  const sel = document.getElementById('sel_region');
+  Object.entries(REGIONS).forEach(([k,r]) => {
+    const o = document.createElement('option');
+    o.value = k;
+    o.textContent = r.name_ja;
+    sel.appendChild(o);
+  });
+
+  setLang('ja');
+  loadProfileList();
+}
+
+/* ════════════════════════════════════════════
+   LANGUAGE
+════════════════════════════════════════════ */
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lb').forEach(b=>b.classList.toggle('on',b.dataset.lang===l));
+  const t = T[l];
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const k=el.dataset.t;
+    if(t[k]===undefined) return;
+    // Never replace innerHTML if element contains form controls — use textContent on span children instead
+    if(el.querySelector('input,select,textarea,button')){
+      // find a .tl span child, or first text node
+      const sp=el.querySelector('.tl');
+      if(sp) sp.innerHTML=t[k];
+      return;
+    }
+    el.innerHTML=t[k];
+  });
+  document.querySelectorAll('[data-t-ph]').forEach(el=>{
+    const k=el.getAttribute('data-t-ph');
+    if(t[k]!==undefined) el.placeholder=t[k];
+  });
+  // Update month labels if region set
+  if(currentRegion) renderRegionInfo(currentRegion);
+}
+
+/* ── Safe Excel download (works in sandboxed iframes too) ── */
+function xlsxDownload(wb, filename){
+  try{
+    // Try native writeFile first
+    XLSX.writeFile(wb, filename);
+  }catch(e){
+    // Fallback: Blob URL
+    const wbout = XLSX.write(wb, {bookType:'xlsx', type:'array'});
+    const blob = new Blob([wbout], {type:'application/octet-stream'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 1000);
+  }
+}
+function onRegionChange(){
+  const k=document.getElementById('sel_region').value;
+  currentRegion=k?REGIONS[k]:null;
+  renderRegionInfo(currentRegion);
+}
+
+function renderRegionInfo(r){
+  const box=document.getElementById('regionInfo');
+  if(!r){box.classList.remove('show');return;}
+  const ln='name_'+lang;
+  const off=r.office[lang]||r.office.ja;
+  let rateHtml=r.rates.map(rt=>{
+    const lo=rt.min===0?'—':`¥${rt.min.toLocaleString()}`;
+    const hi=rt.max?`¥${rt.max.toLocaleString()}`:'以上';
+    const ta=r.is_pct_tax?`${rt.pct*100}%`:`${rt.rate}円/人泊`;
+    return `<span class="ri-rate" style="background:${rt.color};color:${rt.tc}">${rt.label} ${lo}〜${hi} = ${ta}</span>`;
+  }).join('');
+  box.innerHTML=`
+    <div class="ri-name">🏛️ ${r.tax_name}</div>
+    <div class="ri-rates">${rateHtml}</div>
+    <div class="ri-office">
+      <strong>📍 担当窓口：</strong>${off}<br>
+      <strong>📮 住所：</strong>${r.address}<br>
+      <strong>☎️ TEL：</strong>${r.tel}
+      ${r.note_ja?`<br><strong>ℹ️ </strong>${r.note_ja}`:''}
+      ${r.since?`<br><strong>📅 施行：</strong>${r.since}`:''}
+    </div>`;
+  box.classList.add('show');
+}
+
+function classifyByRegion(ppn, region){
+  if(!region) return {rate:0,cat:'?',label:'?'};
+  if(region.is_pct_tax){
+    // % based - handled separately
+    return {rate:0,cat:'%',label:'%'};
+  }
+  if(region.exempt_below && ppn < region.exempt_below){
+    return {rate:0,cat:'免税',label:'免税'};
+  }
+  for(const r of region.rates){
+    const above=ppn>=r.min;
+    const below=r.max===null||ppn<r.max;
+    if(above&&below) return {rate:r.rate,cat:r.label,label:r.label};
+  }
+  return {rate:0,cat:'免税',label:'免税'};
+}
+
+/* ════════════════════════════════════════════
+   PROFILE MANAGEMENT
+════════════════════════════════════════════ */
+function getProfileKey(){ return 'stay_tax_profiles_v1'; }
+function getAllProfiles(){
+  try{ return JSON.parse(localStorage.getItem(getProfileKey())||'{}'); }
+  catch{return {};}
+}
+function loadProfileList(){
+  const profiles=getAllProfiles();
+  const keys=Object.keys(profiles);
+  const bar=document.getElementById('profileBar');
+  const sel=document.getElementById('profileSelect');
+  if(keys.length===0){bar.classList.add('hidden');return;}
+  bar.classList.remove('hidden');
+  sel.innerHTML='<option value="">— 選択 —</option>';
+  keys.forEach(k=>{ const o=document.createElement('option');o.value=k;o.textContent=k;sel.appendChild(o); });
+}
+function saveProfile(){
+  const name=prompt('プロフィール名を入力してください：',gv('f_company')||'施設1');
+  if(!name)return;
+  const profiles=getAllProfiles();
+  profiles[name]=getFormValues();
+  localStorage.setItem(getProfileKey(),JSON.stringify(profiles));
+  loadProfileList();
+  alert('保存しました：'+name);
+}
+function loadProfile(name){
+  if(!name)return;
+  const profiles=getAllProfiles();
+  const p=profiles[name];
+  if(!p)return;
+  setFormValues(p);
+  if(p.region){ document.getElementById('sel_region').value=p.region; onRegionChange(); }
+}
+function deleteProfile(){
+  const sel=document.getElementById('profileSelect');
+  if(!sel.value)return;
+  if(!confirm(`「${sel.value}」を削除しますか？`))return;
+  const profiles=getAllProfiles();
+  delete profiles[sel.value];
+  localStorage.setItem(getProfileKey(),JSON.stringify(profiles));
+  loadProfileList();
+}
+function getFormValues(){
+  return {
+    region:document.getElementById('sel_region').value,
+    company:gv('f_company'),hotel:gv('f_hotel'),addr:gv('f_addr'),faddr:gv('f_faddr'),
+    tel:gv('f_tel'),shihyo:gv('f_shihyo'),chotei:gv('f_chotei'),hojin:gv('f_hojin'),
+  };
+}
+function setFormValues(p){
+  if(p.company) sv('f_company',p.company);
+  if(p.hotel) sv('f_hotel',p.hotel);
+  if(p.addr) sv('f_addr',p.addr);
+  if(p.faddr) sv('f_faddr',p.faddr);
+  if(p.tel) sv('f_tel',p.tel);
+  if(p.shihyo) sv('f_shihyo',p.shihyo);
+  if(p.chotei) sv('f_chotei',p.chotei);
+  if(p.hojin) sv('f_hojin',p.hojin);
+}
+function exportProfile(){
+  const p=getFormValues();
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['宿泊税申告ツール 施設プロフィール設定'],
+    ['region',p.region],['company',p.company],['hotel',p.hotel],
+    ['addr',p.addr],['faddr',p.faddr],['tel',p.tel],
+    ['shihyo',p.shihyo],['chotei',p.chotei],['hojin',p.hojin],
+  ]);
+  XLSX.utils.book_append_sheet(wb,ws,'設定');
+  xlsxDownload(wb,'宿泊税_施設設定.xlsx');
+}
+function importProfile(event){
+  const file=event.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const wb=XLSX.read(e.target.result,{type:'binary'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    const p={};
+    rows.forEach(r=>{if(r[0]&&r[1]!==undefined) p[r[0]]=r[1];});
+    setFormValues(p);
+    if(p.region){document.getElementById('sel_region').value=p.region;onRegionChange();}
+    alert('設定を読み込みました');
+  };
+  reader.readAsBinaryString(file);
+}
+
+/* ════════════════════════════════════════════
+   TEMPLATE DOWNLOAD — clean 5-column, no formulas
+════════════════════════════════════════════ */
+function downloadTemplate(){
+  // Pre-built styled template (generated with openpyxl — clean, no visible formulas)
+  const b64='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';
+  const bin=atob(b64);
+  const arr=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  const blob=new Blob([arr],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='宿泊税_入力テンプレート.xlsx';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove();},1000);
+}
+
+/* ════════════════════════════════════════════
+   FILE UPLOAD
+════════════════════════════════════════════ */
+const upZ=document.getElementById('upZone');
+upZ.addEventListener('dragover',e=>{e.preventDefault();upZ.classList.add('drag-over')});
+upZ.addEventListener('dragleave',()=>upZ.classList.remove('drag-over'));
+upZ.addEventListener('drop',e=>{e.preventDefault();upZ.classList.remove('drag-over');processFile(e.dataTransfer.files[0])});
+function handleFile(ev){processFile(ev.target.files[0])}
+
+function isDateLikeVal(v){
+  if(!v)return false;
+  if(v instanceof Date)return true;
+  if(typeof v==='number'&&v>40000&&v<70000)return true;
+  if(typeof v==='string'){const s=String(v).trim();return /^\d{4}[\/\-\.年]\d{1,2}/.test(s);}
+  return false;
+}
+
+function processFile(file){
+  if(!file)return;
+  const rd=new FileReader();
+  rd.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'binary',cellDates:true});
+      // Smart sheet selection — prefer data sheets, skip guide/instruction sheets
+      const GUIDE_RE=/^[★①②③]|使い方|guide|税率|ガイド|readme/i;
+      const DATA_RE=/データ|data|入力|宿泊|stays|booking/i;
+      let bestWs=null, bestScore=-1;
+      for(const sn of wb.SheetNames){
+        const s=wb.Sheets[sn];
+        if(!s['!ref'])continue;
+        const rng=XLSX.utils.decode_range(s['!ref']);
+        if(rng.e.r<1)continue;
+        let score=rng.e.r;
+        if(GUIDE_RE.test(sn))score-=10000;
+        if(DATA_RE.test(sn))score+=5000;
+        // peek first few rows for date-like values
+        try{
+          const peek=XLSX.utils.sheet_to_json(s,{header:1,range:0,defval:null}).slice(0,6);
+          if(peek.some(row=>(row||[]).some(v=>isDateLikeVal(v))))score+=2000;
+        }catch(e){}
+        if(score>bestScore){bestScore=score;bestWs=s;}
+      }
+      if(!bestWs)throw new Error('データシートが見つかりません');
+      const rows=XLSX.utils.sheet_to_json(bestWs,{header:1,defval:null});
+      parseRows(rows,file.name);
+    }catch(err){showUpStat(err.message,true);}
+  };
+  rd.readAsBinaryString(file);
+}
+
+function parseRows(rows, fname){
+  let ciC=0,niC=1,guC=2,faC=3,idC=4;
+  let start=1;
+  // Try to find header row — covers ja/zh-trad/zh-simp/en/ko
+  for(let r=0;r<Math.min(5,rows.length);r++){
+    const row=rows[r]||[];
+    let score=0;
+    for(let c=0;c<row.length;c++){
+      const v=String(row[c]||'');
+      // date/check-in
+      if(/check.?in|入住|チェックイン|체크인|日付|날짜/i.test(v)){ciC=c;score++;}
+      // nights — ja:泊数 zh:晚/夜 en:night ko:박
+      // NOTE: Use negative lookbehind (?<!宿) so "宿泊" (accommodation) in fare headers
+      // like "宿泊料金合計" does NOT incorrectly match the nights column.
+      if(/night|(?<!宿)泊数?|晚數?|夜数?|박수?/i.test(v)){niC=c;score++;}
+      // guests — ja:人数 zh:人數/人数 en:guest ko:인원
+      if(/guest|人[数數]|인원/i.test(v)){guC=c;score++;}
+      // fare — ja:料金 zh:費用/费用/金額 en:fare/amount/price ko:요금/금액
+      if(/fare|amount|price|料金|費用?|费用?|金[額额]|요금|금액/i.test(v)){faC=c;score++;}
+      // id — optional
+      if(/\bid\b|予約.*ID|預約.*ID|reservation/i.test(v))idC=c;
+    }
+    if(score>=3){start=r+1;break;}
+  }
+  // Safety guard: if nights and fare mapped to the same column (e.g. both landed on
+  // the fare column due to a header mismatch), reset nights to the default column B.
+  if(niC===faC){ niC=1; }
+
+  const records=[];
+  for(let r=start;r<rows.length;r++){
+    const row=rows[r];
+    if(!row)continue;
+    const rawDate=row[ciC];
+    if(!rawDate)continue;
+    // Skip formula strings and non-date text
+    if(typeof rawDate==='string' && rawDate.startsWith('='))continue;
+    if(typeof rawDate==='string' && /^[ぁ-んァ-ン一-龠a-zA-Z]{2,}/.test(rawDate.trim()))continue;
+
+    const ci=parseDate(rawDate);
+    if(!ci)continue;
+
+    const rawNights=row[niC], rawGuests=row[guC], rawFare=row[faC];
+    // Skip rows with formula strings in key columns
+    if(typeof rawNights==='string'&&rawNights.startsWith('='))continue;
+    if(typeof rawFare==='string'&&rawFare.startsWith('='))continue;
+
+    const nights=Math.min(Math.max(parseInt(rawNights)||1,1),365); // cap at 365 nights
+    const guests=Math.max(parseInt(rawGuests)||1,1);
+    const fare=parseFloat(String(rawFare||0).replace(/[,，¥￥\s]/g,''))||0;
+    const rid=String(row[idC]||'');
+    const ppn=fare>0?fare/nights/guests:0;
+    const {rate,cat}=classifyByRegion(ppn,currentRegion);
+    const tax=currentRegion?.is_pct_tax?Math.round(fare*0.02):(cat==='免税'?0:rate*nights*guests);
+    records.push({ci,nights,guests,fare,ppn,cat,rate,tax,id:rid});
+  }
+
+  if(!records.length){showUpStat('データが読み取れませんでした。A列に日付、B列に泊数、C列に人数、D列に料金が入っているか確認してください。',true);return;}
+  parsedData=records;
+  showUpStat(`✅ ${records.length}件を読み込みました — ${fname}`,false);
+  renderPreview(records);
+}
+
+function showUpStat(msg,err){
+  const el=document.getElementById('upStat');
+  el.className='upload-status show '+(err?'err':'ok');
+  document.getElementById('upIcon').textContent=err?'❌':'✅';
+  document.getElementById('upMsg').textContent=msg;
+}
+
+function parseDate(v){
+  if(!v)return null;
+  if(v instanceof Date){
+    return isNaN(v)?null:new Date(Date.UTC(v.getFullYear(),v.getMonth(),v.getDate()));
+  }
+  // Excel serial date number
+  if(typeof v==='number'&&v>40000&&v<70000){
+    const ms=Math.round((v-25569)*86400*1000);
+    const d=new Date(ms);
+    return new Date(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()));
+  }
+  let s=String(v).trim();
+  if(!s||s.startsWith('='))return null;
+  // Normalize: Japanese 年月日 → -
+  s=s.replace(/年/g,'-').replace(/月/g,'-').replace(/日/g,'').trim();
+  // Normalize: slashes or dots → dashes
+  s=s.replace(/[\/\.]/g,'-');
+  // Match YYYY-MM-DD or YYYY-M-D
+  const m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m){
+    const y=parseInt(m[1]),mo=parseInt(m[2])-1,d=parseInt(m[3]);
+    if(mo>=0&&mo<12&&d>=1&&d<=31) return new Date(Date.UTC(y,mo,d));
+  }
+  // Last resort
+  const d=new Date(s);
+  return isNaN(d)?null:new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+}
+
+function fmtDate(v){
+  if(!v)return '';
+  const d=v instanceof Date?v:parseDate(v);
+  if(!d)return String(v);
+  return `${d.getUTCFullYear()}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+
+function fmtY(n){return '¥'+Number(n||0).toLocaleString('ja-JP')}
+
+/* ════════════════════════════════════════════
+   PREVIEW
+════════════════════════════════════════════ */
+function renderPreview(records){
+  const t=T[lang];
+  document.getElementById('previewArea').classList.remove('hidden');
+  const cats=getCats();
+  const catKeys=Object.keys(cats);
+
+  document.getElementById('pHead').innerHTML=`<tr>
+    <th>${t.col_ci}</th><th>${t.col_ni}</th><th>${t.col_gu}</th>
+    <th>${t.col_fa}</th><th>${t.col_pp}</th><th>${t.col_ca}</th><th>${t.col_ta}</th>
+  </tr>`;
+
+  document.getElementById('pBody').innerHTML=records.map(r=>{
+    const cls=r.cat==='①'?'t1':r.cat==='②'?'t2':r.cat==='③'?'t3':'tx';
+    return `<tr>
+      <td>${fmtDate(r.ci)}</td><td>${r.nights}</td><td>${r.guests}</td>
+      <td>${fmtY(r.fare)}</td><td>${fmtY(Math.round(r.ppn))}</td>
+      <td><span class="tag ${cls}">${r.cat}</span></td>
+      <td style="font-weight:700;color:var(--red)">${fmtY(r.tax)}</td>
+    </tr>`;
+  }).join('');
+
+  const s=calcSum(records);
+  document.getElementById('sumRow').innerHTML=`
+    <div class="sc sc1"><div class="lbl">${t.sum1}</div><div class="val" style="color:#1b5e20">${s.n1}</div></div>
+    <div class="sc sc2"><div class="lbl">${t.sum2}</div><div class="val" style="color:#0d47a1">${s.n2}</div></div>
+    <div class="sc sc3"><div class="lbl">${t.sum3}</div><div class="val" style="color:#880e4f">${s.n3}</div></div>
+    <div class="sc scx"><div class="lbl">${t.sumx}</div><div class="val" style="color:#e65100">${s.nx}</div></div>
+    <div class="sc sct"><div class="lbl">${t.sumt}</div><div class="val">${fmtY(s.tax)}</div></div>
+  `;
+}
+
+function getCats(){return{'①':'t1','②':'t2','③':'t3','免税':'tx'};}
+
+function calcSum(records){
+  let n1=0,n2=0,n3=0,nx=0,tax=0;
+  records.forEach(r=>{
+    const pn=r.nights*r.guests;
+    if(r.cat==='①')n1+=pn;
+    else if(r.cat==='②')n2+=pn;
+    else if(r.cat==='③')n3+=pn;
+    else nx+=pn;
+    tax+=r.tax;
+  });
+  return{n1,n2,n3,nx,tax};
+}
+
+function clearAll(){
+  parsedData=[];
+  document.getElementById('previewArea').classList.add('hidden');
+  document.getElementById('upStat').className='upload-status';
+  document.getElementById('fi').value='';
+  document.getElementById('outCard').classList.add('hidden');
+}
+
+/* ════════════════════════════════════════════
+   GENERATE DOCUMENTS
+════════════════════════════════════════════ */
+/* ─── Derive filing months directly from parsed data ─── */
+function getCheckedMonths(){
+  if(!parsedData.length) return [];
+  // Collect unique year+month pairs present in the uploaded data
+  const seen = new Map();
+  parsedData.forEach(r => {
+    const yr = r.ci.getUTCFullYear();
+    const mo = r.ci.getUTCMonth() + 1;
+    const key = `${yr}-${mo}`;
+    if(!seen.has(key)) seen.set(key, {year: yr, month: mo});
+  });
+  // Return sorted chronologically
+  return [...seen.values()].sort((a,b) => a.year !== b.year ? a.year - b.year : a.month - b.month);
+}
+
+function generateDocs(){
+  if(!parsedData.length)return;
+  const t=T[lang];
+  const months=getCheckedMonths();
+  if(!months.length){alert('データをアップロードしてください');return;}
+
+  // Build tabs
+  const tabs=document.getElementById('docTabs');
+  tabs.innerHTML=`
+    <button class="dt on" onclick="swDoc('shinko',this)">${t.tab_sh}</button>
+    <button class="dt" onclick="swDoc('monthly',this)">${t.tab_mo}</button>
+  `;
+
+  // Shinkoku
+  document.getElementById('dp_shinko').innerHTML=buildShinkoku(parsedData,months);
+  // Monthly
+  buildMonthlyAll(parsedData,months);
+
+  document.querySelectorAll('.dp').forEach(p=>p.classList.remove('on'));
+  document.getElementById('dp_shinko').classList.add('on');
+  document.getElementById('outCard').classList.remove('hidden');
+  document.getElementById('outCard').scrollIntoView({behavior:'smooth'});
+}
+
+function swDoc(id,btn){
+  document.querySelectorAll('.dt').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.dp').forEach(p=>p.classList.remove('on'));
+  document.getElementById('dp_'+id).classList.add('on');
+}
+
+/* ─── 申告書 ─── */
+function buildShinkoku(records,months){
+  const f=gv;
+  const region=currentRegion;
+  const reiwa=new Date().getFullYear()-2018;
+  const off=region?((region.office[lang]||region.office.ja)):'—';
+  const addr=region?region.address:'—';
+  const tel=region?region.tel:'—';
+
+  let blocks='';
+  months.forEach(({year,month})=>{
+    const recs=records.filter(r=>r.ci.getUTCFullYear()===year&&r.ci.getUTCMonth()+1===month);
+    let n1=0,n2=0,n3=0,tot_tax=0;
+    recs.forEach(r=>{
+      const pn=r.nights*r.guests;
+      if(r.cat==='①')n1+=pn;
+      else if(r.cat==='②')n2+=pn;
+      else if(r.cat==='③')n3+=pn;
+      tot_tax+=r.tax;
+    });
+    const reiwaY=year-2018;
+    const rates=region?.rates||[];
+    const row=(n,label,rate)=>`<tr>
+      <td>${label}</td><td style="text-align:center">${n}</td>
+      <td style="text-align:center">${rate}</td>
+      <td style="text-align:right">${fmtY(n*rate)}</td>
+    </tr>`;
+    let rateRows='';
+    if(rates[0]) rateRows+=row(n1,`１人１泊${fmtRate(rates[0])}　①`,rates[0].rate);
+    if(rates[1]) rateRows+=row(n2,`１人１泊${fmtRate(rates[1])}　②`,rates[1].rate);
+    if(rates[2]) rateRows+=row(n3,`１人１泊${fmtRate(rates[2])}　③`,rates[2].rate);
+
+    blocks+=`<div class="sh-mb">
+      <div class="sh-mh"><span>令和${reiwaY}年　${month}月分</span><span style="color:var(--red)">納入金額: ${fmtY(tot_tax)}</span></div>
+      <table class="sh-tbl">
+        <tr><th>区分</th><th>宿泊数（泊）</th><th>税率</th><th>税額（円）</th></tr>
+        ${rateRows}
+        <tr class="sh-tot"><td>計①＋②＋③</td><td style="text-align:center">${n1+n2+n3}</td><td style="text-align:center">納入金額</td><td style="text-align:right;color:var(--red)">${fmtY(tot_tax)}</td></tr>
+      </table>
+    </div>`;
+  });
+
+  const grand=months.reduce((a,{year,month})=>{
+    return a+records.filter(r=>r.ci.getUTCFullYear()===year&&r.ci.getUTCMonth()+1===month).reduce((b,r)=>b+r.tax,0);
+  },0);
+
+  return `<div class="sh">
+    <div class="sh-title">${region?region.tax_name+' 納入申告書':'宿　泊　税　納　入　申　告　書'}</div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px;font-size:10px">
+      <div>
+        <div style="margin-bottom:4px">${off}長　　様</div>
+        <div>宿泊税条例の規定により、次のとおり申告します。</div>
+        <div style="margin-top:5px">令和${reiwa}年　　月　　日</div>
+      </div>
+      <div style="border:1px solid #999;padding:7px 12px;text-align:center;font-size:9px">
+        <div>徴収番号</div><div style="font-size:13px;font-weight:700">${f('f_chotei')}</div>
+      </div>
+    </div>
+    <div class="sh-info">
+      <div class="sh-info-row"><div>特別徴収義務者 住所</div><div>${f('f_addr')}</div></div>
+      <div class="sh-info-row"><div>氏名 / 法人名称</div><div>${f('f_company')}</div></div>
+      <div class="sh-info-row"><div>法人番号</div><div>${f('f_hojin')}</div></div>
+      <div class="sh-info-row"><div>施設 所在地</div><div>${f('f_faddr')}</div></div>
+      <div class="sh-info-row"><div>施設名 / 届出番号</div><div>${f('f_hotel')}</div></div>
+      <div class="sh-info-row"><div>証票番号</div><div>${f('f_shihyo')}</div></div>
+      <div class="sh-info-row"><div>電話番号</div><div>${f('f_tel')}</div></div>
+    </div>
+    ${blocks}
+    <div class="sh-grand">
+      <span style="font-size:11px;font-weight:700">全期間 納入金額合計：</span>
+      <span style="font-size:17px;font-weight:700;color:var(--red)">${fmtY(grand)}</span>
+    </div>
+    <div class="sh-note">
+      ※申告すべき宿泊税額が０円の場合も本申告書を提出してください。<br>
+      ※本書は民間ツールで生成されたものです。内容を必ず確認の上ご提出ください。<br>
+      担当：${off}　TEL: ${tel}　${addr}
+    </div>
+  </div>`;
+}
+
+function fmtRate(r){
+  const lo=`¥${r.min.toLocaleString()}`;
+  const hi=r.max?`¥${r.max.toLocaleString()}未満`:'以上';
+  return `${lo}〜${hi}`;
+}
+
+/* ─── 月計表 ─── */
+function buildMonthlyAll(records,months){
+  const tabs=document.getElementById('moTabs');
+  const cont=document.getElementById('moContent');
+  tabs.innerHTML='';cont.innerHTML='';
+  months.forEach(({year,month},i)=>{
+    const label=`令和${year-2018}年${month}月`;
+    const btn=document.createElement('button');
+    btn.className='mt-btn'+(i===0?' on':'');
+    btn.textContent=label;
+    const panel=document.createElement('div');
+    panel.className='mo-panel'+(i===0?' on':'');
+    panel.style.display=i===0?'block':'none';
+    btn.onclick=()=>{
+      document.querySelectorAll('.mt-btn').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      document.querySelectorAll('.mo-panel').forEach(p=>p.style.display='none');
+      panel.style.display='block';
+    };
+    panel.innerHTML=buildMonthlyTable(records,year,month);
+    tabs.appendChild(btn);cont.appendChild(panel);
+  });
+}
+
+function buildMonthlyTable(records,year,month){
+  const lastDay=new Date(year,month,0).getDate();
+  const daily={};
+  for(let d=1;d<=lastDay;d++)daily[d]={n1:0,n2:0,n3:0,nx:0};
+  records.filter(r=>r.ci.getUTCFullYear()===year&&r.ci.getUTCMonth()+1===month).forEach(r=>{
+    const d=r.ci.getUTCDate();
+    const pn=r.nights*r.guests;
+    if(r.cat==='①')daily[d].n1+=pn;
+    else if(r.cat==='②')daily[d].n2+=pn;
+    else if(r.cat==='③')daily[d].n3+=pn;
+    else daily[d].nx+=pn;
+  });
+  let t1=0,t2=0,t3=0,tx=0,rows='';
+  for(let d=1;d<=lastDay;d++){
+    const r=daily[d];t1+=r.n1;t2+=r.n2;t3+=r.n3;tx+=r.nx;
+    const tot=r.n1+r.n2+r.n3;
+    const has=tot+r.nx>0;
+    rows+=`<tr style="${has?'background:#f8f9ff':''}">
+      <td class="dc" style="font-weight:${has?700:400}">${d}</td>
+      <td class="c1">${r.n1||''}</td><td class="c2">${r.n2||''}</td>
+      <td class="c3">${r.n3||''}</td><td style="font-weight:700">${tot||''}</td>
+      <td>${r.nx||''}</td><td></td>
+    </tr>`;
+  }
+  return `<div class="monthly-wrap">
+    <div style="text-align:right;font-size:10px;color:#999">様式第８号</div>
+    <div class="m-title">宿　泊　税　月　計　表</div>
+    <div class="m-sub">
+      <span>証票番号：${gv('f_shihyo')}　　施設名：${gv('f_hotel')}</span>
+      <span>令和${year-2018}年　${month}月分</span>
+    </div>
+    <table class="mt">
+      <thead>
+        <tr>
+          <th rowspan="2" class="dc">日</th>
+          <th colspan="4">宿　泊　数　（泊）</th>
+          <th rowspan="2" style="font-size:10px">免税点未満<br>外国大使等</th>
+          <th rowspan="2">備考</th>
+        </tr>
+        <tr>
+          <th class="c1">200円　①</th><th class="c2">400円　②</th>
+          <th class="c3">500円　③</th><th>計①＋②＋③</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr class="tot-row">
+          <td>計</td>
+          <td class="c1" style="font-size:14px">${t1}</td>
+          <td class="c2" style="font-size:14px">${t2}</td>
+          <td class="c3" style="font-size:14px">${t3}</td>
+          <td style="font-weight:700;font-size:14px">${t1+t2+t3}</td>
+          <td>${tx}</td><td></td>
+        </tr>
+        <tr class="tax-row">
+          <td colspan="2" style="font-weight:700;text-align:left">宿泊税合計</td>
+          <td class="c1">${fmtY(t1*200)}</td>
+          <td class="c2">${fmtY(t2*400)}</td>
+          <td class="c3">${fmtY(t3*500)}</td>
+          <td colspan="2" style="font-weight:700;color:var(--red);font-size:14px;text-align:right">${fmtY(t1*200+t2*400+t3*500)}</td>
+        </tr>
+      </tfoot>
+    </table>
+    <div style="font-size:9.5px;color:#666;margin-top:8px">注：納入申告書に必ず添付してください。</div>
+  </div>`;
+}
+
+/* ════════════════════════════════════════════
+   PRINT
+════════════════════════════════════════════ */
+function doPrint(type){
+  const content=type==='shinko'
+    ?document.getElementById('dp_shinko').innerHTML
+    :document.querySelector('.mo-panel[style*="block"], .mo-panel.on')?.innerHTML||document.getElementById('moContent').innerHTML;
+  const pw=window.open('','_blank');
+  pw.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+      body{font-family:'Noto Serif JP',serif;margin:12mm;background:#fff;font-size:10pt}
+      @page{margin:12mm;size:A4}
+      .sh{border:2px solid #111;padding:14px;font-size:10pt}
+      .sh-title{text-align:center;font-size:15pt;font-weight:700;padding:9px 0;border-bottom:2px solid #111;margin-bottom:10px;letter-spacing:.15em}
+      .sh-info{display:grid;grid-template-columns:110px 1fr;border:1px solid #111;margin-bottom:10px}
+      .sh-info-row{display:contents}
+      .sh-info-row>div{border:0.5px solid #999;padding:5px 8px;font-size:9pt}
+      .sh-info-row>div:first-child{background:#f4f4f4;font-weight:700}
+      .sh-mb{border:1px solid #111;margin-bottom:9px}
+      .sh-mh{background:#e8eaf6;padding:5px 10px;font-weight:700;border-bottom:1px solid #aaa;display:flex;justify-content:space-between}
+      .sh-tbl{width:100%;border-collapse:collapse}
+      .sh-tbl th,.sh-tbl td{border:0.5px solid #999;padding:4px 7px;font-size:9pt}
+      .sh-tbl th{background:#f0f0f0}
+      .sh-tot td{background:#fff9c4;font-weight:700}
+      .sh-grand{text-align:right;margin-top:10px;padding:9px;background:#fff3cd;border-radius:4px}
+      .sh-note{font-size:8pt;color:#555;margin-top:8px;border-top:1px solid #ddd;padding-top:7px}
+      .monthly-wrap{font-family:'Noto Serif JP',serif}
+      .m-title{text-align:center;font-size:16pt;font-weight:700;padding:8px 0 3px;letter-spacing:.08em}
+      .m-sub{display:flex;justify-content:space-between;font-size:9pt;margin-bottom:10px}
+      .mt{width:100%;border-collapse:collapse}
+      .mt th,.mt td{border:1px solid #333;padding:4px 6px;text-align:center;font-size:9pt}
+      .mt th{background:#e8eaf6}
+      .tot-row td{background:#e8eaf6;font-weight:700}
+      .tax-row td{background:#fff9c4}
+      .c1{color:#1b5e20}.c2{color:#0d47a1}.c3{color:#880e4f}.dc{font-weight:700;width:30px}
+    </style>
+  </head><body>${content}</body></html>`);
+  pw.document.close();
+  pw.onload=()=>pw.print();
+}
+
+/* ════════════════════════════════════════════
+   EXCEL RESULT DOWNLOAD
+════════════════════════════════════════════ */
+function dlResult(){
+  if(!parsedData.length)return;
+  const wb=XLSX.utils.book_new();
+  const months=getCheckedMonths();
+  // Raw
+  const rh=['チェックイン日','泊数','人数','宿泊料金合計','1人1泊単価','税区分','税率','宿泊税合計','予約ID'];
+  const rd=parsedData.map(r=>[fmtDate(r.ci),r.nights,r.guests,r.fare,Math.round(r.ppn),r.cat,r.rate,r.tax,r.id]);
+  const ws0=XLSX.utils.aoa_to_sheet([rh,...rd]);
+  ws0['!cols']=[{wch:14},{wch:6},{wch:6},{wch:17},{wch:14},{wch:8},{wch:8},{wch:14},{wch:16}];
+  XLSX.utils.book_append_sheet(wb,ws0,'源データ');
+  // Monthly sheets
+  months.forEach(({year,month})=>{
+    const recs=parsedData.filter(r=>r.ci.getUTCFullYear()===year&&r.ci.getUTCMonth()+1===month);
+    const last=new Date(year,month,0).getDate();
+    const daily={};
+    for(let d=1;d<=last;d++)daily[d]={n1:0,n2:0,n3:0,nx:0};
+    recs.forEach(r=>{const d=r.ci.getUTCDate(),pn=r.nights*r.guests;
+      if(r.cat==='①')daily[d].n1+=pn;else if(r.cat==='②')daily[d].n2+=pn;else if(r.cat==='③')daily[d].n3+=pn;else daily[d].nx+=pn;});
+    let t1=0,t2=0,t3=0,tx=0;
+    const rows=[
+      [`様式第8号 宿泊税月計表 令和${year-2018}年${month}月分`],
+      ['日','①200円','②400円','③500円','計','免税','備考'],
+    ];
+    for(let d=1;d<=last;d++){const r=daily[d];t1+=r.n1;t2+=r.n2;t3+=r.n3;tx+=r.nx;rows.push([d,r.n1||0,r.n2||0,r.n3||0,r.n1+r.n2+r.n3,r.nx||0,'']);}
+    rows.push(['計',t1,t2,t3,t1+t2+t3,tx,'']);
+    rows.push(['税額',t1*200,t2*400,t3*500,t1*200+t2*400+t3*500,'','']);
+    const ws=XLSX.utils.aoa_to_sheet(rows);
+    XLSX.utils.book_append_sheet(wb,ws,`月計表_${year}年${String(month).padStart(2,'0')}月`);
+  });
+  xlsxDownload(wb,`宿泊税申告_${gv('f_hotel')||'施設'}.xlsx`);
+}
+
+/* ── Helpers ── */
+function gv(id){return document.getElementById(id)?.value||'';}
+function sv(id,v){const el=document.getElementById(id);if(el)el.value=v;}
+
+// Init on load
+document.addEventListener('DOMContentLoaded',init);
+</script>
+</body>
+</html>
